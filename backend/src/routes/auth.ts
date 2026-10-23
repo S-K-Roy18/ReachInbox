@@ -36,7 +36,7 @@ passport.use(
         });
         return done(null, user);
       } catch (err) {
-        return done(err as any, null);
+        return done(err as any, undefined);
       }
     }
   )
@@ -75,29 +75,33 @@ router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   (req: Request, res: Response) => {
-    // Regenerate session to avoid fixation attacks
-    req.session.regenerate(() => {
-      // @ts-ignore – session typing
-      req.session.userId = (req.user as any).id;
-      // Redirect to frontend protected page
-      const redirectUrl = `${env.FRONTEND_URL}/dashboard`;
-      res.redirect(redirectUrl);
+    // Save user before regeneration (regenerate destroys old session data)
+    const user = req.user;
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error("[auth] session regeneration failed");
+        return res.redirect("/");
+      }
+      // Re-attach user to new session via passport login
+      req.logIn(user!, () => {
+        const redirectUrl = `${env.FRONTEND_URL}/dashboard`;
+        res.redirect(redirectUrl);
+      });
     });
   }
 );
 
-// Return currently logged‑in user (safe fields only)
+// Return currently logged-in user (safe fields only)
 router.get("/me", ensureAuthenticated, async (req: Request, res: Response) => {
-  // @ts-ignore – session typing
-  const userId = req.session?.userId as number;
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+  const user = req.user as { id: number };
+  const found = await prisma.user.findUnique({
+    where: { id: user.id },
     select: { id: true, email: true, name: true, avatarUrl: true },
   });
-  if (!user) {
+  if (!found) {
     return res.status(401).json({ error: "Unauthenticated" });
   }
-  res.json(user);
+  res.json(found);
 });
 
 // Logout – destroy session & clear cookie
