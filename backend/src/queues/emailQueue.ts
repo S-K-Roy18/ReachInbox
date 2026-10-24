@@ -1,6 +1,7 @@
 // backend/src/queues/emailQueue.ts
 import { Queue } from "bullmq";
 import { redisConnectionOptions } from "../utils/redis";
+import { EtherealDeliveryResult } from "../services/etherealEmail";
 
 export interface EmailJobData {
   campaignId: number;
@@ -16,7 +17,7 @@ export const getEmailJobId = (campaignId: number, recipientId: number): string =
   return `email:${campaignId}:${recipientId}`;
 };
 
-export const emailQueue = new Queue<EmailJobData, void, "send-email">(EMAIL_QUEUE_NAME, {
+export const emailQueue = new Queue<EmailJobData, EtherealDeliveryResult | null, "send-email">(EMAIL_QUEUE_NAME, {
   connection: redisConnectionOptions,
   defaultJobOptions: {
     attempts: 3,

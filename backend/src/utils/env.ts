@@ -15,6 +15,15 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   REDIS_HOST: z.string().default("localhost"),
   REDIS_PORT: z.string().default("6379"),
+  ETHEREAL_USER: z.string().min(1).optional(),
+  ETHEREAL_PASS: z.string().min(1).optional(),
+}).superRefine((value, context) => {
+  if (Boolean(value.ETHEREAL_USER) !== Boolean(value.ETHEREAL_PASS)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "ETHEREAL_USER and ETHEREAL_PASS must both be configured.",
+    });
+  }
 });
 
 export const env = EnvSchema.parse(process.env);
