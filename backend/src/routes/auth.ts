@@ -55,7 +55,7 @@ passport.deserializeUser(async (id: number, done) => {
 });
 
 // ---------- Helpers ----------
-function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
+export function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
   // @ts-ignore – added by passport
   if (req.isAuthenticated && req.isAuthenticated()) {
     return next();

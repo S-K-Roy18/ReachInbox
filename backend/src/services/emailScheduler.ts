@@ -1,6 +1,7 @@
 ﻿// backend/src/services/emailScheduler.ts
 import { prisma } from "../utils/prisma";
 import { emailQueue, getEmailJobId } from "../queues/emailQueue";
+import { indexCampaignSafely, indexRecipientDocumentsSafely } from "./elasticsearch";
 
 export interface SchedulingResult {
   campaignId: number;
@@ -105,6 +106,11 @@ export async function scheduleCampaign(campaignId: number): Promise<SchedulingRe
         delay: Math.max(0, recipient.scheduledTime.getTime() - Date.now()),
       }
     );
+  }
+
+  if (schedulingPlan.scheduledCount > 0) {
+    void indexCampaignSafely(campaignId);
+    void indexRecipientDocumentsSafely(schedulingPlan.recipientsToEnqueue.map((recipient) => recipient.id));
   }
 
   if (schedulingPlan.scheduledCount === 0) {

@@ -2,6 +2,7 @@
 import { createEmailWorker } from "./workers/emailWorker";
 import { emailQueue } from "./queues/emailQueue";
 import { prisma } from "./utils/prisma";
+import { closeRedisClient } from "./utils/redis";
 
 console.log("[worker-process] Starting ReachInbox email worker...");
 
@@ -19,6 +20,7 @@ const shutdown = async (signal: string) => {
   try {
     await worker.close();
     await emailQueue.close();
+    await closeRedisClient();
     await prisma.$disconnect();
     console.log("[worker-process] Cleanup completed successfully.");
     process.exit(0);

@@ -8,14 +8,18 @@ datasource db {
 }
 
 model User {
-  id        Int             @id @default(autoincrement())
-  googleId  String          @unique
-  email     String          @unique
-  name      String?
-  avatarUrl String?
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
-  campaigns EmailCampaign[]
+  id                        Int             @id @default(autoincrement())
+  googleId                  String          @unique
+  email                     String          @unique
+  name                      String?
+  avatarUrl                 String?
+  slackAccessTokenEncrypted String?
+  slackUserId               String?
+  slackTeamId               String?
+  slackConnectedAt          DateTime?
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+  campaigns                 EmailCampaign[]
 }
 
 enum CampaignStatus {

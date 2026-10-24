@@ -4,6 +4,7 @@ import { prisma } from "./src/utils/prisma";
 import { scheduleCampaign } from "./src/services/emailScheduler";
 import { createEmailWorker } from "./src/workers/emailWorker";
 import { emailQueue, getEmailJobId } from "./src/queues/emailQueue";
+import { closeRedisClient } from "./src/utils/redis";
 import {
   closeEtherealSmtp,
   EtherealCredentials,
@@ -167,6 +168,7 @@ async function runTest() {
       await prisma.user.deleteMany({ where: { id: userId } });
     }
     await emailQueue.close();
+    await closeRedisClient();
     closeEtherealSmtp();
     await prisma.$disconnect();
   }

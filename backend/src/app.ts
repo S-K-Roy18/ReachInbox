@@ -5,6 +5,9 @@ import connectPgSimple from "connect-pg-simple";
 import passport from "passport";
 import { env } from "./utils/env";
 import authRouter from "./routes/auth";
+import campaignRouter from "./routes/campaigns";
+import slackRouter from "./routes/slack";
+import searchRouter from "./routes/search";
 import { errorHandler } from "./middleware/errorHandler";
 
 const PgStore = connectPgSimple(session);
@@ -50,6 +53,15 @@ export const createApp = () => {
 
   // Auth routes
   app.use("/api/auth", authRouter);
+
+  // Authenticated campaign routes
+  app.use("/api/campaigns", campaignRouter);
+
+  // Authenticated Slack integration routes
+  app.use("/api/integrations/slack", slackRouter);
+
+  // Authenticated search routes
+  app.use("/api/search", searchRouter);
 
   // 404 handler
   app.use((_req, res) => {

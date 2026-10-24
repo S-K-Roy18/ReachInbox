@@ -26,3 +26,9 @@ export const getRedisClient = (): Redis => {
 
   return redisClient;
 };
+
+export const closeRedisClient = async (): Promise<void> => {
+  const client = redisClient;
+  redisClient = null;
+  if (client) await client.quit();
+};
