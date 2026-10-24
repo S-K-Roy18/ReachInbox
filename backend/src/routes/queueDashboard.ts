@@ -78,6 +78,7 @@ createBullBoard({
 });
 
 const router = Router();
+export const queueDashboardAccessRouter = Router();
 router.use(ensureAuthenticated);
 router.use((req: Request, res: Response, next) => {
   const email = (req.user as { email?: unknown } | undefined)?.email;
@@ -87,5 +88,10 @@ router.use((req: Request, res: Response, next) => {
   return next();
 });
 router.use(serverAdapter.getRouter());
+
+queueDashboardAccessRouter.get("/queue-dashboard-access", ensureAuthenticated, (req: Request, res: Response) => {
+  const email = (req.user as { email?: unknown } | undefined)?.email;
+  return res.json({ authorized: typeof email === "string" && isBullBoardAdmin(email) });
+});
 
 export default router;

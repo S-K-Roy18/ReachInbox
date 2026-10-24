@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { createServer, Server } from "http";
 import connectPgSimple from "connect-pg-simple";
 import session from "express-session";
-import { createApp } from "./src/app";
+import { closeAppSessionStores, createApp } from "./src/app";
 import { prisma } from "./src/utils/prisma";
 import { env } from "./src/utils/env";
 import { isSlackTestNotificationEnabled } from "./src/services/slackIntegration";
@@ -120,6 +120,7 @@ async function runCampaignApiTest(): Promise<void> {
       ["GET", "/api/search/campaigns"],
       ["GET", "/api/search/recipients"],
       ["POST", "/api/search/reindex", "{}"],
+      ["GET", "/api/admin/queue-dashboard-access"],
       ["GET", "/admin/queues"],
       ["GET", "/admin/queues/api/queues"],
       ["GET", "/api/integrations/slack/status"],
@@ -196,6 +197,8 @@ async function runCampaignApiTest(): Promise<void> {
 
     const dashboardDenied = await request("/admin/queues", { method: "GET" }, ownerCookie);
     assert(dashboardDenied.status === 403, "Authenticated non-admin must not access Bull Board");
+    const dashboardAccess = await request("/api/admin/queue-dashboard-access", { method: "GET" }, ownerCookie);
+    assert(dashboardAccess.status === 200 && dashboardAccess.body.authorized === false, "non-admin status endpoint should return only an authorization flag");
 
     const slackStatus = await request("/api/integrations/slack/status", { method: "GET" }, ownerCookie);
     assert(slackStatus.status === 200 && slackStatus.body.connected === false, "Slack status should be authenticated and disconnected by default");
@@ -231,6 +234,7 @@ async function runCampaignApiTest(): Promise<void> {
     await Promise.all(sessionIds.map((sessionId) => new Promise<void>((resolve) => sessionStore.destroy(sessionId, () => resolve()))));
     if (server?.listening) await new Promise<void>((resolve) => server!.close(() => resolve()));
     await emailQueue.close();
+    await closeAppSessionStores();
     await prisma.$disconnect();
     sessionStore.close();
   }

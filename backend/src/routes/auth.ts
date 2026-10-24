@@ -3,9 +3,8 @@ import { Router, Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { env } from "../utils/env";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../utils/prisma";
 
-const prisma = new PrismaClient();
 const router = Router();
 
 // ---------- Passport configuration ----------

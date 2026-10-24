@@ -8,13 +8,25 @@ import authRouter from "./routes/auth";
 import campaignRouter from "./routes/campaigns";
 import slackRouter from "./routes/slack";
 import searchRouter from "./routes/search";
-import queueDashboardRouter from "./routes/queueDashboard";
+import queueDashboardRouter, { queueDashboardAccessRouter } from "./routes/queueDashboard";
 import { errorHandler } from "./middleware/errorHandler";
 
 const PgStore = connectPgSimple(session);
+const sessionStores = new Set<{ close(): Promise<void> | void }>();
+
+export async function closeAppSessionStores(): Promise<void> {
+  const stores = [...sessionStores];
+  sessionStores.clear();
+  await Promise.all(stores.map((store) => store.close()));
+}
 
 export const createApp = () => {
   const app = express();
+  const sessionStore = new PgStore({
+    conString: env.DATABASE_URL,
+    createTableIfMissing: true,
+  });
+  sessionStores.add(sessionStore);
 
   // CORS – allow frontend origin with credentials
   app.use(
@@ -29,10 +41,7 @@ export const createApp = () => {
   // Session middleware backed by PostgreSQL
   app.use(
     session({
-      store: new PgStore({
-        conString: env.DATABASE_URL,
-        createTableIfMissing: true,
-      }),
+      store: sessionStore,
       secret: env.SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
@@ -66,6 +75,7 @@ export const createApp = () => {
 
   // Allowlisted admin access only; Bull Board is read-only.
   app.use("/admin/queues", queueDashboardRouter);
+  app.use("/api/admin", queueDashboardAccessRouter);
 
   // 404 handler
   app.use((_req, res) => {
