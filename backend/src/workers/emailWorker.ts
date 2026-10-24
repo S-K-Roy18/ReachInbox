@@ -27,7 +27,7 @@ export const createEmailWorker = (
   const worker = new Worker<EmailJobData, EtherealDeliveryResult | null, "send-email">(
     EMAIL_QUEUE_NAME,
     async (job: Job<EmailJobData, EtherealDeliveryResult | null, "send-email">) => {
-      const { campaignId, recipientId, subject, body } = job.data;
+      const { campaignId, recipientId } = job.data;
       const attemptNumber = job.attemptsMade + 1;
       console.log(
         `[email-worker] Processing job ${job.id} (attempt ${attemptNumber}) for recipient ${recipientId}`
@@ -51,7 +51,7 @@ export const createEmailWorker = (
 
       const campaign = await prisma.emailCampaign.findUnique({
         where: { id: campaignId },
-        select: { userId: true, hourlyLimit: true, delayBetweenEmails: true },
+        select: { userId: true, hourlyLimit: true, delayBetweenEmails: true, subject: true, body: true },
       });
       if (!campaign) {
         console.warn(`[email-worker] Campaign ${campaignId} not found. Skipping recipient ${recipientId}.`);
@@ -87,7 +87,7 @@ export const createEmailWorker = (
         }
       }
 
-      const delivery = await sendEmail({ subject, body });
+      const delivery = await sendEmail({ subject: campaign.subject, body: campaign.body });
 
       // Only mark SENT after the Ethereal SMTP server accepts the test message.
       await prisma.emailRecipient.update({

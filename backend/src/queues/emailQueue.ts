@@ -6,9 +6,6 @@ import { EtherealDeliveryResult } from "../services/etherealEmail";
 export interface EmailJobData {
   campaignId: number;
   recipientId: number;
-  recipientEmail: string;
-  subject: string;
-  body: string;
 }
 
 export const EMAIL_QUEUE_NAME = "email-dispatch";

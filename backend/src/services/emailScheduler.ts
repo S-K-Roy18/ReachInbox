@@ -97,9 +97,6 @@ export async function scheduleCampaign(campaignId: number): Promise<SchedulingRe
       {
         campaignId: schedulingPlan.campaign.id,
         recipientId: recipient.id,
-        recipientEmail: recipient.email,
-        subject: schedulingPlan.campaign.subject,
-        body: schedulingPlan.campaign.body,
       },
       {
         jobId: getEmailJobId(schedulingPlan.campaign.id, recipient.id),

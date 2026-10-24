@@ -8,6 +8,7 @@ import authRouter from "./routes/auth";
 import campaignRouter from "./routes/campaigns";
 import slackRouter from "./routes/slack";
 import searchRouter from "./routes/search";
+import queueDashboardRouter from "./routes/queueDashboard";
 import { errorHandler } from "./middleware/errorHandler";
 
 const PgStore = connectPgSimple(session);
@@ -62,6 +63,9 @@ export const createApp = () => {
 
   // Authenticated search routes
   app.use("/api/search", searchRouter);
+
+  // Allowlisted admin access only; Bull Board is read-only.
+  app.use("/admin/queues", queueDashboardRouter);
 
   // 404 handler
   app.use((_req, res) => {

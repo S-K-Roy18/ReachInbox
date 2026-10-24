@@ -8,6 +8,12 @@ import { env } from "./src/utils/env";
 import { isSlackTestNotificationEnabled } from "./src/services/slackIntegration";
 import { isElasticsearchConfigured } from "./src/services/elasticsearch";
 import { emailQueue, getEmailJobId } from "./src/queues/emailQueue";
+import {
+  isBullBoardAdmin,
+  parseBullBoardAdminEmails,
+  sanitizeBullBoardJobData,
+  sanitizeBullBoardResponse,
+} from "./src/routes/queueDashboard";
 
 const PgStore = connectPgSimple(session);
 const sessionStore = new PgStore({
@@ -26,6 +32,35 @@ function signSessionId(sessionId: string): string {
 }
 
 async function runCampaignApiTest(): Promise<void> {
+  const dashboardAdmins = parseBullBoardAdminEmails("Ops@Example.com, admin@example.net ");
+  assert(isBullBoardAdmin("ops@example.com", dashboardAdmins), "dashboard email allowlist should be case-insensitive");
+  assert(!isBullBoardAdmin("other@example.com", dashboardAdmins), "unlisted email should not be authorized");
+  const sanitizedJobData = sanitizeBullBoardJobData({
+    campaignId: 11,
+    recipientId: 22,
+    recipientEmail: "private@example.invalid",
+    subject: "Private subject",
+    body: "Private email body",
+  });
+  assert(
+    JSON.stringify(sanitizedJobData) === JSON.stringify({ campaignId: 11, recipientId: 22 }),
+    "dashboard job payload should only include campaign and recipient IDs"
+  );
+  const sanitizedLegacyResponse = sanitizeBullBoardResponse({
+    jobs: [{
+      id: "email:11:22",
+      data: { campaignId: 11, recipientId: 22, recipientEmail: "private@example.invalid", subject: "Private", body: "Secret" },
+      returnValue: { accessToken: "secret" },
+      failedReason: "safe diagnostic",
+    }],
+  });
+  assert(
+    JSON.stringify(sanitizedLegacyResponse) === JSON.stringify({
+      jobs: [{ id: "email:11:22", data: { campaignId: 11, recipientId: 22 }, failedReason: "safe diagnostic" }],
+    }),
+    "dashboard response should redact legacy bodies, addresses, and return values while retaining job state diagnostics"
+  );
+
   const token = randomUUID();
   const sessionIds: string[] = [];
   let userIds: number[] = [];
@@ -85,6 +120,8 @@ async function runCampaignApiTest(): Promise<void> {
       ["GET", "/api/search/campaigns"],
       ["GET", "/api/search/recipients"],
       ["POST", "/api/search/reindex", "{}"],
+      ["GET", "/admin/queues"],
+      ["GET", "/admin/queues/api/queues"],
       ["GET", "/api/integrations/slack/status"],
       ["GET", "/api/integrations/slack/oauth"],
       ["POST", "/api/campaigns", "{}"],
@@ -156,6 +193,9 @@ async function runCampaignApiTest(): Promise<void> {
     const detail = await request(`/api/campaigns/${campaignId}`, { method: "GET" }, ownerCookie);
     assert(detail.status === 200 && detail.body.recipients.length === 1, "Owner should see recipient details");
     assert(detail.body.recipients[0].email === "test.user@example.com", "Stored recipient should be normalized");
+
+    const dashboardDenied = await request("/admin/queues", { method: "GET" }, ownerCookie);
+    assert(dashboardDenied.status === 403, "Authenticated non-admin must not access Bull Board");
 
     const slackStatus = await request("/api/integrations/slack/status", { method: "GET" }, ownerCookie);
     assert(slackStatus.status === 200 && slackStatus.body.connected === false, "Slack status should be authenticated and disconnected by default");

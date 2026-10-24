@@ -14,11 +14,14 @@
     "test:rate-limits": "node -r ts-node/register/transpile-only test-rate-limits.ts",
     "test:slack": "node -r ts-node/register/transpile-only test-slack.ts",
     "test:elasticsearch": "node -r ts-node/register/transpile-only test-elasticsearch.ts",
+    "test:bull-board": "node -r ts-node/register/transpile-only test-bull-board.ts",
     "smtp:verify": "node -r ts-node/register/transpile-only verify-smtp.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init"
   },
   "dependencies": {
+    "@bull-board/api": "^9.10.5",
+    "@bull-board/express": "^9.10.5",
     "@prisma/client": "^5.0.0",
     "bullmq": "^6.4.1",
     "connect-pg-simple": "^8.0.0",
