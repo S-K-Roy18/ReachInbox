@@ -25,7 +25,10 @@ export const createApp = () => {
   // Session middleware backed by PostgreSQL
   app.use(
     session({
-      store: new PgStore({ conString: env.DATABASE_URL }),
+      store: new PgStore({
+        conString: env.DATABASE_URL,
+        createTableIfMissing: true,
+      }),
       secret: env.SESSION_SECRET,
       resave: false,
       saveUninitialized: false,

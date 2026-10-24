@@ -73,22 +73,10 @@ router.get(
 // Google OAuth callback
 router.get(
   "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/" }),
-  (req: Request, res: Response) => {
-    // Save user before regeneration (regenerate destroys old session data)
-    const user = req.user;
-    req.session.regenerate((err) => {
-      if (err) {
-        console.error("[auth] session regeneration failed");
-        return res.redirect("/");
-      }
-      // Re-attach user to new session via passport login
-      req.logIn(user!, () => {
-        const redirectUrl = `${env.FRONTEND_URL}/dashboard`;
-        res.redirect(redirectUrl);
-      });
-    });
-  }
+  passport.authenticate("google", {
+    successRedirect: `${env.FRONTEND_URL}/dashboard`,
+    failureRedirect: `${env.FRONTEND_URL}/`,
+  })
 );
 
 // Return currently logged-in user (safe fields only)
@@ -105,12 +93,18 @@ router.get("/me", ensureAuthenticated, async (req: Request, res: Response) => {
 });
 
 // Logout – destroy session & clear cookie
-router.post("/logout", (req: Request, res: Response) => {
-  req.logout(() => {});
-  req.session.destroy(() => {
-    // Clear the cookie (default name is connect.sid)
-    res.clearCookie("connect.sid");
-    res.json({ success: true });
+router.post("/logout", (req: Request, res: Response, next: NextFunction) => {
+  req.logout((err) => {
+    if (err) {
+      return next(err);
+    }
+    req.session.destroy((destroyErr) => {
+      if (destroyErr) {
+        console.error("[auth] session destroy error", destroyErr);
+      }
+      res.clearCookie("connect.sid");
+      res.json({ success: true });
+    });
   });
 });
 

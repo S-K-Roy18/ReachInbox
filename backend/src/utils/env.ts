@@ -13,6 +13,8 @@ const EnvSchema = z.object({
   GOOGLE_CALLBACK_URL: z.string().url(),
   SESSION_SECRET: z.string(),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  REDIS_HOST: z.string().default("localhost"),
+  REDIS_PORT: z.string().default("6379"),
 });
 
 export const env = EnvSchema.parse(process.env);

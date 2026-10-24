@@ -8,11 +8,64 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  googleId  String   @unique
-  email     String   @unique
+  id        Int             @id @default(autoincrement())
+  googleId  String          @unique
+  email     String          @unique
   name      String?
   avatarUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  campaigns EmailCampaign[]
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  RUNNING
+  PAUSED
+  COMPLETED
+  FAILED
+}
+
+enum RecipientStatus {
+  PENDING
+  QUEUED
+  SENT
+  FAILED
+}
+
+model EmailCampaign {
+  id                 Int              @id @default(autoincrement())
+  userId             Int
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject            String
+  body               String
+  startTime          DateTime         @default(now())
+  delayBetweenEmails Int              @default(0)
+  hourlyLimit        Int?
+  status             CampaignStatus   @default(DRAFT)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  recipients         EmailRecipient[]
+
+  @@index([userId, status])
+  @@index([status])
+}
+
+model EmailRecipient {
+  id            Int             @id @default(autoincrement())
+  campaignId    Int
+  campaign      EmailCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  email         String
+  status        RecipientStatus @default(PENDING)
+  scheduledTime DateTime?
+  sentTime      DateTime?
+  attemptCount  Int             @default(0)
+  lastError     String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([campaignId, email])
+  @@index([campaignId, status])
+  @@index([status, scheduledTime])
 }

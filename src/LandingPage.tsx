@@ -1,4 +1,3 @@
-import React from 'react';
 
 function LandingPage() {
   const currentYear = new Date().getFullYear();
