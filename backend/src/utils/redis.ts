@@ -1,8 +1,8 @@
-﻿// backend/src/utils/redis.ts
-import Redis, { RedisOptions } from "ioredis";
+import Redis from "ioredis";
+import { ConnectionOptions } from "bullmq";
 import { env } from "./env";
 
-export const redisConnectionOptions: RedisOptions = {
+export const redisConnectionOptions: ConnectionOptions = {
   host: env.REDIS_HOST,
   port: Number(env.REDIS_PORT),
   maxRetriesPerRequest: null,
