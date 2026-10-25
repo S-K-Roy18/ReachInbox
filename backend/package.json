@@ -17,7 +17,8 @@
     "test:bull-board": "node -r ts-node/register/transpile-only test-bull-board.ts",
     "smtp:verify": "node -r ts-node/register/transpile-only verify-smtp.ts",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev --name init"
+    "prisma:migrate": "prisma migrate dev --name init",
+    "prisma:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@bull-board/api": "^9.10.5",
