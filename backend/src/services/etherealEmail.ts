@@ -130,6 +130,35 @@ export function closeEtherealSmtp(): void {
   transporterCredentials = undefined;
 }
 
+export async function verifyTcpConnection(host: string = ETHEREAL_HOST, port: number = 587, timeoutMs: number = 5000): Promise<void> {
+  // Perform a single bounded TCP connection test; subsequent calls are no‑ops.
+  if ((global as any)._tcpChecked) return;
+  await new Promise<void>((resolve, reject) => {
+    const net = require('net');
+    const socket = new net.Socket();
+    const timer = setTimeout(() => {
+      socket.destroy();
+      reject(new EtherealSmtpError('TCP connection', 'ETIMEDOUT'));
+    }, timeoutMs);
+    socket.once('connect', () => {
+      clearTimeout(timer);
+      socket.end();
+      console.log(`[smtp-tcp] TCP connection succeeded. Stage=TCP connection, Code=OK, Host=${host}, Port=${port}`);
+      resolve();
+    });
+    socket.once('error', (err: any) => {
+      clearTimeout(timer);
+      socket.destroy();
+      const code = typeof err.code === 'string' ? err.code : 'UNKNOWN';
+      console.error(`[smtp-tcp] TCP connection failed. Stage=TCP connection, Code=${code}, Host=${host}, Port=${port}`);
+      reject(new EtherealSmtpError('TCP connection', code));
+    });
+    socket.connect(port, host);
+  }).finally(() => {
+    (global as any)._tcpChecked = true;
+  });
+}
+
 /**
  * Verify the Ethereal SMTP connection with a bounded timeout.
  * Logs error details (stage, code, host, port) without exposing credentials.

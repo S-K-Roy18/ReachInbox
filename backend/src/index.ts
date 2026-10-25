@@ -3,7 +3,7 @@ import { closeAppSessionStores, createApp } from "./app";
 import { env } from "./utils/env";
 import { createEmailWorker } from "./workers/emailWorker";
 import { registerGracefulShutdown } from "./utils/gracefulShutdown";
-import { verifyEtherealSmtpWithTimeout, EtherealSmtpError, getVerificationStage, getSafeCode } from "./services/etherealEmail";
+import { verifyEtherealSmtpWithTimeout, EtherealSmtpError, getVerificationStage, getSafeCode, verifyTcpConnection } from "./services/etherealEmail";
 
 const app = createApp();
 const worker = createEmailWorker();
@@ -21,6 +21,14 @@ const server = app.listen(Number(env.PORT), () => {
         : stage;
       console.error(`[smtp-startup] Ethereal SMTP verification failed. Stage=${finalStage}, Code=${code}, Host=${"smtp.ethereal.email"}, Port=587`);
     })
+    // Run a one‑off TCP connectivity check (non‑blocking).
+    void verifyTcpConnection()
+      .then(() => console.log("[smtp-startup] TCP connection succeeded"))
+      .catch((err) => {
+        const stage = err instanceof EtherealSmtpError ? err.stage : getVerificationStage(err);
+        const code = err instanceof EtherealSmtpError ? err.code : getSafeCode(err);
+        console.error(`[smtp-startup] TCP connection failed. Stage=${stage}, Code=${code}, Host=${"smtp.ethereal.email"}, Port=587`);
+      });
 });
 
 const shutdown = registerGracefulShutdown({ label: "api-process", worker, server, closeSessionStores: closeAppSessionStores });
