@@ -130,6 +130,30 @@ export function closeEtherealSmtp(): void {
   transporterCredentials = undefined;
 }
 
+/**
+ * Verify the Ethereal SMTP connection with a bounded timeout.
+ * Logs error details (stage, code, host, port) without exposing credentials.
+ */
+export async function verifyEtherealSmtpWithTimeout(
+  timeoutMs: number = 15000,
+  credentials?: EtherealCredentials
+): Promise<void> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`SMTP verification timed out after ${timeoutMs}ms`)), timeoutMs)
+  );
+  try {
+    await Promise.race([verifyEtherealSmtp(credentials), timeout]);
+    console.log(`[smtp-verify] Ethereal SMTP verified (host=${ETHEREAL_HOST}, port=587)`);
+  } catch (err) {
+    const stage = err instanceof EtherealSmtpError ? err.stage : "unknown";
+    const code = err instanceof EtherealSmtpError ? err.code : (err as any).code ?? "UNKNOWN";
+    console.error(
+      `[smtp-verify] Ethereal SMTP verification failed. Stage=${stage}, Code=${code}, Host=${ETHEREAL_HOST}, Port=587`
+    );
+    throw err;
+  }
+}
+
 export async function sendEtherealEmail(
   message: EtherealEmail,
   credentials?: EtherealCredentials

@@ -15,7 +15,7 @@
     "test:slack": "node -r ts-node/register/transpile-only test-slack.ts",
     "test:elasticsearch": "node -r ts-node/register/transpile-only test-elasticsearch.ts",
     "test:bull-board": "node -r ts-node/register/transpile-only test-bull-board.ts",
-    "smtp:verify": "node -r ts-node/register/transpile-only verify-smtp.ts",
+    "smtp:verify": "node -r ts-node/register/transpile-only scripts/verify-smtp.ts",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:deploy": "prisma migrate deploy"
