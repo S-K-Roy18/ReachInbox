@@ -14,9 +14,11 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().url(),
   FRONTEND_URL: z.string().url(),
   GOOGLE_CLIENT_ID: z.string(),
-  GOOGLE_CLIENT_SECRET: z.string(),
-  GOOGLE_CALLBACK_URL: z.string().url(),
-  SESSION_SECRET: z.string(),
+GOOGLE_CLIENT_SECRET: z.string(),
+GOOGLE_CALLBACK_URL: z.string().url().default(
+  "http://localhost:4000/api/auth/google/callback"
+),
+SESSION_SECRET: z.string(),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   REDIS_HOST: z.string().default("localhost"),
   REDIS_PORT: z.string().default("6379"),
