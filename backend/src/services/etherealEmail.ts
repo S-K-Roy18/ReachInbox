@@ -138,11 +138,21 @@ export async function verifyEtherealSmtpWithTimeout(
   timeoutMs: number = 15000,
   credentials?: EtherealCredentials
 ): Promise<void> {
-  const timeout = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error(`SMTP verification timed out after ${timeoutMs}ms`)), timeoutMs)
-  );
+  // Obtain a transporter instance (may be cached) so we can close it later.
+  let transport: Transporter;
   try {
-    await Promise.race([verifyEtherealSmtp(credentials), timeout]);
+    transport = getTransporter(credentials);
+  } catch {
+    throw new EtherealSmtpError("configuration", "NOT_CONFIGURED");
+  }
+
+  let timer: NodeJS.Timeout | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`SMTP verification timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+
+  try {
+    await Promise.race([transport.verify(), timeoutPromise]);
     console.log(`[smtp-verify] Ethereal SMTP verified (host=${ETHEREAL_HOST}, port=587)`);
   } catch (err) {
     const stage = err instanceof EtherealSmtpError ? err.stage : "unknown";
@@ -151,6 +161,11 @@ export async function verifyEtherealSmtpWithTimeout(
       `[smtp-verify] Ethereal SMTP verification failed. Stage=${stage}, Code=${code}, Host=${ETHEREAL_HOST}, Port=587`
     );
     throw err;
+  } finally {
+    if (timer) clearTimeout(timer);
+    // Ensure the underlying connection is closed and the cached transporter cleared.
+    transport?.close?.();
+    closeEtherealSmtp();
   }
 }
 
