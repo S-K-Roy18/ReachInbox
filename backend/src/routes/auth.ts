@@ -7,6 +7,14 @@ import { prisma } from "../utils/prisma";
 
 const router = Router();
 
+console.log(
+  "[OAuth config]",
+  "callbackURL =",
+  env.GOOGLE_CALLBACK_URL,
+  "frontendURL =",
+  env.FRONTEND_URL
+);
+
 // ---------- Passport configuration ----------
 passport.use(
   new GoogleStrategy(
