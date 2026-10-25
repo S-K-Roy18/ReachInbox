@@ -1,4 +1,4 @@
-﻿// backend/test-pipeline.ts
+// backend/test-pipeline.ts
 import { randomUUID } from "crypto";
 import { prisma } from "./src/utils/prisma";
 import { scheduleCampaign } from "./src/services/emailScheduler";
@@ -154,23 +154,32 @@ async function runTest() {
     console.log("--- ETHEREAL PIPELINE VERIFICATION PASSED ---");
   } finally {
     currentTestStage = "test cleanup";
-    await worker?.close();
-    await Promise.all(
-      recipientIds.map(async (recipientId) => {
-        const job = await emailQueue.getJob(getEmailJobId(campaignId ?? 0, recipientId));
-        if (job) await job.remove();
-      })
-    );
-    if (campaignId !== undefined) {
-      await prisma.emailCampaign.deleteMany({ where: { id: campaignId } });
+    try {
+      await worker?.close();
+      // Clean up queued jobs – ignore errors if a job was already removed or queue closed
+      await Promise.all(
+        recipientIds.map(async (recipientId) => {
+          try {
+            const job = await emailQueue.getJob(getEmailJobId(campaignId ?? 0, recipientId));
+            if (job) await job.remove();
+          } catch (e) {
+            console.warn('Job cleanup error (ignored):', e);
+          }
+        })
+      );
+      if (campaignId !== undefined) {
+        await prisma.emailCampaign.deleteMany({ where: { id: campaignId } });
+      }
+      if (userId !== undefined) {
+        await prisma.user.deleteMany({ where: { id: userId } });
+      }
+      await emailQueue.close();
+      await closeRedisClient();
+      closeEtherealSmtp();
+      await prisma.$disconnect();
+    } catch (e) {
+      console.warn('Test cleanup error (ignored):', e);
     }
-    if (userId !== undefined) {
-      await prisma.user.deleteMany({ where: { id: userId } });
-    }
-    await emailQueue.close();
-    await closeRedisClient();
-    closeEtherealSmtp();
-    await prisma.$disconnect();
   }
 }
 
