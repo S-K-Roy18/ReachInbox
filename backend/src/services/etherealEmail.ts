@@ -148,15 +148,15 @@ export async function verifyEtherealSmtpWithTimeout(
 
   let timer: NodeJS.Timeout | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`SMTP verification timed out after ${timeoutMs}ms`)), timeoutMs);
+    timer = setTimeout(() => reject(new EtherealSmtpError('SMTP verification', 'TIMEOUT')), timeoutMs);
   });
 
   try {
     await Promise.race([transport.verify(), timeoutPromise]);
     console.log(`[smtp-verify] Ethereal SMTP verified (host=${ETHEREAL_HOST}, port=587)`);
   } catch (err) {
-    const stage = err instanceof EtherealSmtpError ? err.stage : "unknown";
-    const code = err instanceof EtherealSmtpError ? err.code : (err as any).code ?? "UNKNOWN";
+    const stage = err instanceof EtherealSmtpError ? err.stage : getVerificationStage(err);
+    const code = err instanceof EtherealSmtpError ? err.code : getSafeCode(err);
     console.error(
       `[smtp-verify] Ethereal SMTP verification failed. Stage=${stage}, Code=${code}, Host=${ETHEREAL_HOST}, Port=587`
     );
