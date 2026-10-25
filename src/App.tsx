@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import LandingPage from './LandingPage';
 import Dashboard from './Dashboard';
+import { API_BASE_URL } from './config';
 import './dashboard.css';
 
 interface AuthUser {
@@ -16,7 +17,7 @@ function App() {
 
   const fetchUser = async () => {
     try {
-      const res = await fetch('http://localhost:4000/api/auth/me', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
         credentials: 'include',
       });
       if (res.ok) {
@@ -38,7 +39,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:4000/api/auth/logout', {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });

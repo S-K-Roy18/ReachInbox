@@ -1,4 +1,6 @@
 
+import { API_BASE_URL } from './config';
+
 function LandingPage() {
   const currentYear = new Date().getFullYear();
   return (
@@ -19,11 +21,11 @@ function LandingPage() {
           INTELLIGENT EMAIL SCHEDULING · BUILT FOR MODERN TEAMS
         </p>
                   <div className="mt-8 flex flex-row gap-4 justify-center items-center">
-            <a href="http://localhost:4000/api/auth/google" className="bg-white text-black rounded-full px-6 py-3 flex items-center hover:bg-gray-200 transition">Sign In<span className="ml-2" aria-hidden="true">→</span></a>
+            <a href={`${API_BASE_URL}/api/auth/google`} className="bg-white text-black rounded-full px-6 py-3 flex items-center hover:bg-gray-200 transition">Sign In<span className="ml-2" aria-hidden="true">→</span></a>
 
 
 
-          <a href="http://localhost:4000/api/auth/google" className="border border-gray-500 text-white rounded-full px-6 py-3 hover:bg-gray-800 transition">Sign Up</a>
+          <a href={`${API_BASE_URL}/api/auth/google`} className="border border-gray-500 text-white rounded-full px-6 py-3 hover:bg-gray-800 transition">Sign Up</a>
         </div>
       </div>
 

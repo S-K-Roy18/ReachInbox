@@ -22,6 +22,12 @@ export async function closeAppSessionStores(): Promise<void> {
 
 export const createApp = () => {
   const app = express();
+  const isProduction = env.NODE_ENV === "production";
+
+  if (isProduction) {
+    app.set("trust proxy", 1);
+  }
+
   const sessionStore = new PgStore({
     conString: env.DATABASE_URL,
     createTableIfMissing: true,
@@ -29,9 +35,21 @@ export const createApp = () => {
   sessionStores.add(sessionStore);
 
   // CORS – allow frontend origin with credentials
+  const normalizedFrontendUrl = env.FRONTEND_URL.replace(/\/+$/, "");
   app.use(
     cors({
-      origin: env.FRONTEND_URL,
+      origin: (origin, callback) => {
+        if (
+          !origin ||
+          origin === env.FRONTEND_URL ||
+          origin === normalizedFrontendUrl ||
+          origin.replace(/\/+$/, "") === normalizedFrontendUrl
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Origin ${origin} not allowed by CORS`));
+        }
+      },
       credentials: true,
     })
   );
@@ -47,8 +65,8 @@ export const createApp = () => {
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: isProduction,
+        sameSite: isProduction ? "none" : "lax",
         maxAge: 1000 * 60 * 60 * 24, // 1 day
       },
     })

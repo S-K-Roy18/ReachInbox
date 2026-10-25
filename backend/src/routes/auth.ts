@@ -78,11 +78,12 @@ router.get(
 );
 
 // Google OAuth callback
+const frontendBaseUrl = env.FRONTEND_URL.replace(/\/+$/, "");
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    successRedirect: `${env.FRONTEND_URL}/dashboard`,
-    failureRedirect: `${env.FRONTEND_URL}/`,
+    successRedirect: `${frontendBaseUrl}/dashboard`,
+    failureRedirect: `${frontendBaseUrl}/`,
   })
 );
 

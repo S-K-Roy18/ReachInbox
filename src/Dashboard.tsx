@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { API_BASE_URL } from './config';
 
-const API = 'http://localhost:4000';
+const API = API_BASE_URL;
 
 type View = 'overview' | 'campaigns' | 'create' | 'details' | 'search' | 'integrations';
 type RecipientStatus = 'PENDING' | 'QUEUED' | 'SENT' | 'FAILED';
