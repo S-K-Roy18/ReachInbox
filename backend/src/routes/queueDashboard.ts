@@ -90,6 +90,7 @@ router.use((req: Request, res: Response, next) => {
 router.use(serverAdapter.getRouter());
 
 queueDashboardAccessRouter.get("/queue-dashboard-access", ensureAuthenticated, (req: Request, res: Response) => {
+  // Authorization based on admin email list (BULL_BOARD_ADMIN_EMAILS env var)
   const email = (req.user as { email?: unknown } | undefined)?.email;
   return res.json({ authorized: typeof email === "string" && isBullBoardAdmin(email) });
 });

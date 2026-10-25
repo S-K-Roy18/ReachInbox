@@ -34,7 +34,7 @@ SESSION_SECRET: z.string(),
   ),
   ELASTICSEARCH_URL: z.preprocess((value) => value === "" ? undefined : value, z.string().url().optional()),
   ELASTICSEARCH_API_KEY: optionalEnvironmentString,
-  BULL_BOARD_ADMIN_EMAILS: optionalEnvironmentString,
+  BULL_BOARD_ADMIN_EMAILS: z.string().min(1),
 }).superRefine((value, context) => {
   if (Boolean(value.ETHEREAL_USER) !== Boolean(value.ETHEREAL_PASS)) {
     context.addIssue({
