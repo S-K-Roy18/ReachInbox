@@ -3,7 +3,7 @@ import { closeAppSessionStores, createApp } from "./app";
 import { env } from "./utils/env";
 import { createEmailWorker } from "./workers/emailWorker";
 import { registerGracefulShutdown } from "./utils/gracefulShutdown";
-import { verifyEtherealSmtpWithTimeout } from "./services/etherealEmail";
+import { verifyEtherealSmtpWithTimeout, EtherealSmtpError, getVerificationStage, getSafeCode } from "./services/etherealEmail";
 
 const app = createApp();
 const worker = createEmailWorker();
@@ -14,10 +14,13 @@ const server = app.listen(Number(env.PORT), () => {
   void verifyEtherealSmtpWithTimeout()
     .then(() => console.log("[smtp-startup] Ethereal SMTP verification succeeded"))
     .catch((err) => {
-      const stage = err instanceof Error && "stage" in err ? (err as any).stage : "unknown";
-      const code = err instanceof Error && "code" in err ? (err as any).code : "UNKNOWN";
-      console.error(`[smtp-startup] Ethereal SMTP verification failed. Stage=${stage}, Code=${code}, Host=${"smtp.ethereal.email"}, Port=587`);
-    });
+      const stage = err instanceof EtherealSmtpError ? err.stage : getVerificationStage(err);
+      const code = err instanceof EtherealSmtpError ? err.code : getSafeCode(err);
+      const finalStage = (code === "TIMEOUT" || code === "ETIMEDOUT") && stage === "SMTP verification"
+        ? "overall verification timeout"
+        : stage;
+      console.error(`[smtp-startup] Ethereal SMTP verification failed. Stage=${finalStage}, Code=${code}, Host=${"smtp.ethereal.email"}, Port=587`);
+    })
 });
 
 const shutdown = registerGracefulShutdown({ label: "api-process", worker, server, closeSessionStores: closeAppSessionStores });

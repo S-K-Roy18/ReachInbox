@@ -75,7 +75,7 @@ function getTransporter(credentials?: EtherealCredentials): Transporter {
   return transporter;
 }
 
-function getSafeCode(error: unknown): string {
+export function getSafeCode(error: unknown): string {
   if (typeof error !== "object" || error === null) return "UNKNOWN";
   const details = error as { code?: unknown; originalCode?: unknown };
   for (const code of [details.originalCode, details.code]) {
@@ -84,7 +84,7 @@ function getSafeCode(error: unknown): string {
   return "UNKNOWN";
 }
 
-function getVerificationStage(error: unknown): EtherealSmtpStage {
+export function getVerificationStage(error: unknown): EtherealSmtpStage {
   if (typeof error !== "object" || error === null) return "SMTP verification";
   const details = error as {
     code?: unknown;
